@@ -73,31 +73,19 @@ class NFA:
             if i < self._M - 1 and self._re[i + 1] == '*':
                 self._G.addEdge(lp, i + 1)
                 self._G.addEdge(i + 1, lp)
-            if self._re[i] == '(' or self._re[i] == '*' or self._re[i] == ')':
+            if self._re[i] in "(*)":
                 self._G.addEdge(i, i + 1)
 
     def recognizes(self, txt: str) -> bool:
-        pc = Bag()
         dfs = DirectedDFS(self._G, [0])
-        for v in range(self._G.V):
-            if dfs.marked(v):
-                pc.add(v)
+        pc = Bag([v for v in range(self._G.V) if dfs.marked(v)])
 
         for i in range(len(txt)):
-            match = Bag()
-            for v in pc:
-                if v < self._M:
-                    if self._re[v] == txt[i] or self._re[v] == '.':
-                        match.add(v + 1)
-            pc = Bag()
+            match = Bag([v + 1 for v in pc if v < self._M and self._re[v] in '.' + txt[i]])
             dfs = DirectedDFS(self._G, match)
-            for v in range(self._G.V):
-                if dfs.marked(v):
-                    pc.add(v)
-        for v in pc:
-            if v == self._M:
-                return True
-        return False
+            pc = Bag([v for v in range(self._G.V) if dfs.marked(v)])
+
+        return self._M in pc
 
 
 if __name__ == '__main__':
